@@ -1,16 +1,36 @@
-import { App, normalizePath, Platform, Setting, TFile, TFolder, Vault } from 'obsidian';
-import { getAllFiles, NodePickedFile, NodePickedFolder, path, parseFilePath, PickedFile, WebPickedFile } from './filesystem';
+import { App, normalizePath, Setting, TFile, TFolder, Vault } from 'obsidian';
 import { ImporterModal, ImportContext, AuthCallback } from './main';
 import { sanitizeFileName } from './util';
 
-const MAX_PATH_DESCRIPTION_LENGTH = 300;
+function splitext(name: string): [string, string] {
+	let i = name.lastIndexOf('.');
+	if (i <= 0 || i === name.length - 1) {
+		return [name, ''];
+	}
+
+	const basename = name.substring(0, i);
+	const extension = name.substring(i + 1).toLowerCase();
+	return [basename, extension];
+}
+
+function parseFilePath(filepath: string): { parent: string, name: string, basename: string, extension: string } {
+	let lastIndex = Math.max(filepath.lastIndexOf('/'), filepath.lastIndexOf('\\'));
+	let name = filepath;
+	let parent = '';
+	if (lastIndex >= 0) {
+		name = filepath.substring(lastIndex + 1);
+		parent = filepath.substring(0, lastIndex);
+	}
+
+	let [basename, extension] = splitext(name);
+	return { parent, name, basename, extension };
+}
 
 export abstract class FormatImporter {
 	app: App;
 	vault: Vault;
 	modal: ImporterModal;
 
-	files: PickedFile[] = [];
 	outputLocation: string = '';
 	notAvailable: boolean = false;
 
@@ -49,81 +69,6 @@ export abstract class FormatImporter {
 	 */
 	registerAuthCallback(callback: AuthCallback): void {
 		this.modal.plugin.registerAuthCallback(callback);
-	}
-
-	addFileChooserSetting(name: string, extensions: string[], allowMultiple: boolean = false, description?: string, defaultPath?: string) {
-		let fileLocationSetting = new Setting(this.modal.contentEl)
-			.setName('Files to import')
-			.setDesc(description || 'Pick the files that you want to import.')
-			.addButton(button => button
-				.setButtonText(allowMultiple ? 'Choose files' : 'Choose file')
-				.onClick(async () => {
-					if (Platform.isDesktopApp) {
-						let properties = ['openFile', 'dontAddToRecent'];
-						if (allowMultiple) {
-							properties.push('multiSelections');
-						}
-						let filePaths: string[] = window.electron.remote.dialog.showOpenDialogSync({
-							title: 'Pick files to import', properties,
-							filters: [{ name, extensions }],
-							defaultPath: defaultPath || undefined,
-						});
-
-						if (filePaths && filePaths.length > 0) {
-							this.files = filePaths.map((filepath: string) => new NodePickedFile(filepath));
-							updateFiles();
-						}
-					}
-					else {
-						let inputEl = createEl('input');
-						inputEl.type = 'file';
-						inputEl.accept = extensions.map(e => '.' + e.toLowerCase()).join(',');
-						inputEl.addEventListener('change', () => {
-							if (!inputEl.files) return;
-							let files = Array.from(inputEl.files);
-							if (files.length > 0) {
-								this.files = files.map(file => new WebPickedFile(file))
-									.filter(file => extensions.contains(file.extension));
-								updateFiles();
-							}
-						});
-						inputEl.click();
-					}
-				}));
-
-		if (allowMultiple && Platform.isDesktopApp) {
-			fileLocationSetting.addButton(button => button
-				.setButtonText('Choose folders')
-				.onClick(async () => {
-					if (Platform.isDesktopApp) {
-						let filePaths: string[] = window.electron.remote.dialog.showOpenDialogSync({
-							title: 'Pick folders to import',
-							properties: ['openDirectory', 'multiSelections', 'dontAddToRecent'],
-							defaultPath: defaultPath || undefined,
-						});
-
-						if (filePaths && filePaths.length > 0) {
-							fileLocationSetting.setDesc('Reading folders...');
-							let folders = filePaths.map((filepath: string) => new NodePickedFolder(filepath));
-							this.files = await getAllFiles(folders, (file: PickedFile) => extensions.contains(file.extension));
-							updateFiles();
-						}
-					}
-				}));
-		}
-
-		let updateFiles = () => {
-			let descriptionFragment = document.createDocumentFragment();
-			let fileCount = this.files.length;
-			let pathText = this.files.map(f => f.name).join(', ');
-			if (pathText.length > MAX_PATH_DESCRIPTION_LENGTH) {
-				pathText = pathText.substring(0, MAX_PATH_DESCRIPTION_LENGTH) + '...';
-			}
-			descriptionFragment.createEl('span', { text: `These ${fileCount} files will be imported: ` });
-			descriptionFragment.createEl('br');
-			descriptionFragment.createEl('span', { cls: 'u-pop', text: pathText });
-			fileLocationSetting.setDesc(descriptionFragment);
-		};
 	}
 
 	addOutputLocationSetting(defaultExportFolderName: string) {
@@ -221,7 +166,8 @@ export abstract class FormatImporter {
 		let i = 1;
 		let outputPath = prelimOutPath;
 		while (claimedPaths.includes(outputPath) || !!this.vault.getAbstractFileByPath(outputPath)) {
-			outputPath = path.join(parsedPrelimOutPath.parent, `${parsedPrelimOutPath.name} ${i}${fullExt}`);
+			const parentPrefix = parsedPrelimOutPath.parent ? `${parsedPrelimOutPath.parent}/` : '';
+			outputPath = `${parentPrefix}${parsedPrelimOutPath.name} ${i}${fullExt}`;
 			i++;
 		}
 

@@ -979,7 +979,6 @@ Object.keys(db).forEach((type) => {
 
 	extensions[type] = exts[0]
 })
-console.log(extensions);
  */
 
 let EXTRACT_TYPE_REGEXP = /^\s*([^;\s]*)(?:;|\s|$)/;

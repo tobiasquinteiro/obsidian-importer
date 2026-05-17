@@ -3,13 +3,6 @@ import { FormatImporter } from './format-importer';
 import { UrlImporter } from './formats/url';
 import { truncateText } from './util';
 
-declare global {
-	interface Window {
-		electron: any;
-		require: NodeRequire;
-	}
-}
-
 interface ImporterDefinition {
 	name: string;
 	optionText: string;
@@ -147,8 +140,6 @@ export class ImportContext {
 		this.skipped.push(name);
 		this.skippedCountEl.setText(this.skipped.length.toString());
 
-		console.log('Import skipped', name, reason);
-
 		this.importLogEl.createDiv('list-item', el => {
 			el.createSpan({ cls: 'importer-error', text: 'Skipped: ' });
 			el.createSpan({ text: `"${truncateText(name, this.maxFileNameLength)}"` + (reason ? ` because ${truncateText(String(reason), this.maxFileNameLength)}` : '') });
@@ -168,8 +159,6 @@ export class ImportContext {
 		this.failed.push(name);
 		this.failedCountEl.setText(this.failed.length.toString());
 
-		console.log('Import failed', name, reason);
-
 		this.importLogEl.createDiv('list-item', el => {
 			el.createSpan({ cls: 'importer-error', text: 'Failed: ' });
 			el.createSpan({ text: `"${truncateText(name, this.maxFileNameLength)}"` + (reason ? ` because ${truncateText(String(reason), this.maxFileNameLength)}` : '') });
@@ -186,7 +175,6 @@ export class ImportContext {
 	 */
 	reportProgress(current: number, total: number) {
 		if (total <= 0) return;
-		console.log('Current progress:', (100 * current / total).toFixed(1) + '%');
 		this.remainingCountEl.setText((total - current).toString());
 		this.importedCountEl.setText(current.toString());
 		this.progressBarInnerEl.style.width = (100 * current / total).toFixed(1) + '%';
@@ -212,11 +200,6 @@ export class ImportContext {
 }
 
 export interface ImporterData {
-	importers: {
-		onenote?: {
-			previouslyImportedIDs: string[];
-		};
-	};
 	quickUrl: {
 		outputFolder: string;
 		createImportSubfolder: boolean;
@@ -234,11 +217,6 @@ export interface ImporterData {
 }
 
 const DEFAULT_DATA: ImporterData = {
-	importers: {
-		onenote: {
-			previouslyImportedIDs: [],
-		},
-	},
 	quickUrl: {
 		outputFolder: 'URL import',
 		createImportSubfolder: true,
@@ -372,8 +350,6 @@ export default class ImporterPlugin extends Plugin {
 	async loadData(): Promise<ImporterData> {
 		const loaded = await super.loadData();
 		const data = Object.assign({}, DEFAULT_DATA, loaded) as ImporterData;
-		data.importers = Object.assign({}, DEFAULT_DATA.importers, data.importers);
-		data.importers.onenote = Object.assign({}, DEFAULT_DATA.importers.onenote, data.importers.onenote);
 		data.quickUrl = Object.assign({}, DEFAULT_DATA.quickUrl, data.quickUrl);
 		return data;
 	}
