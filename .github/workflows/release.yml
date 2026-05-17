@@ -15,19 +15,17 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-
-      - name: Install pnpm
-        run: npm install -g pnpm
+          node-version: "22"
+          cache: "npm"
 
       - name: Install dependencies
-        run: pnpm install
+        run: npm ci --legacy-peer-deps
 
       - name: Build plugin
-        run: pnpm run build
+        run: npm run build
 
       - name: Create release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             main.js
