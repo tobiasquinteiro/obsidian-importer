@@ -1,18 +1,5 @@
 import { App, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 import { FormatImporter } from './format-importer';
-import { AppleNotesImporter } from './formats/apple-notes';
-import { AppleJournalImporter } from './formats/apple-journal';
-import { Bear2bkImporter } from './formats/bear-bear2bk';
-import { CSVImporter } from './formats/csv';
-import { EvernoteEnexImporter } from './formats/evernote-enex';
-import { HtmlImporter } from './formats/html';
-import { KeepImporter } from './formats/keep-json';
-import { NotionImporter } from './formats/notion';
-import { NotionAPIImporter } from './formats/notion-api';
-import { OneNoteImporter } from './formats/onenote';
-import { RoamJSONImporter } from './formats/roam-json';
-import { TextbundleImporter } from './formats/textbundle';
-import { TomboyImporter } from './formats/tomboy';
 import { UrlImporter } from './formats/url';
 import { truncateText } from './util';
 
@@ -278,90 +265,11 @@ export default class ImporterPlugin extends Plugin {
 		this.data = await this.loadData();
 
 		this.importers = {
-			'apple-notes': {
-				name: 'Apple Notes',
-				optionText: 'Apple Notes',
-				importer: AppleNotesImporter,
-				helpPermalink: 'import/apple-notes'
-			},
-			'apple-journal': {
-				name: 'Apple Journal',
-				optionText: 'Apple Journal (HTML export)',
-				importer: AppleJournalImporter,
-				formatDescription: 'Import your Journal app entries to Obsidian',
-			},
-			'bear': {
-				name: 'Bear',
-				optionText: 'Bear (.bear2bk)',
-				importer: Bear2bkImporter,
-				helpPermalink: 'import/bear',
-			},
-			'csv': {
-				name: 'CSV',
-				optionText: 'CSV (.csv)',
-				importer: CSVImporter,
-				helpPermalink: 'import/csv',
-			},
-			'evernote': {
-				name: 'Evernote',
-				optionText: 'Evernote (.enex)',
-				importer: EvernoteEnexImporter,
-				helpPermalink: 'import/evernote',
-			},
-			'keep': {
-				name: 'Google Keep',
-				optionText: 'Google Keep (.zip/.json)',
-				importer: KeepImporter,
-				helpPermalink: 'import/google-keep',
-			},
-			'html': {
-				name: 'HTML files',
-				optionText: 'HTML (.html)',
-				importer: HtmlImporter,
-				helpPermalink: 'import/html',
-			},
-			'onenote': {
-				name: 'Microsoft OneNote',
-				optionText: 'Microsoft OneNote',
-				importer: OneNoteImporter,
-				helpPermalink: 'import/onenote',
-			},
-			'notion-api': {
-				name: 'Notion (API)',
-				optionText: 'Notion (API)',
-				importer: NotionAPIImporter,
-				helpPermalink: 'import/notion',
-			},
-			'notion': {
-				name: 'Notion',
-				optionText: 'Notion (.zip)',
-				importer: NotionImporter,
-				helpPermalink: 'import/notion',
-				formatDescription: 'Export your Notion workspace to HTML format.',
-			},
-			'roam-json': {
-				name: 'Roam Research',
-				optionText: 'Roam Research (.json)',
-				importer: RoamJSONImporter,
-				helpPermalink: 'import/roam',
-				formatDescription: 'Export your Roam Research workspace to JSON format.',
-			},
-			'textbundle': {
-				name: 'Textbundle files',
-				optionText: 'Textbundle (.textbundle, .textpack)',
-				importer: TextbundleImporter,
-				helpPermalink: 'import/textbundle',
-			},
 			'url': {
 				name: 'Web page URL',
 				optionText: 'URL (Web page)',
 				importer: UrlImporter,
 				formatDescription: 'Fetch a web page from a URL and save the content as Markdown.',
-			},
-			'tomboy': {
-				name: 'Tomboy/Gnote',
-				optionText: 'Tomboy/Gnote (.note)',
-				importer: TomboyImporter,
 			},
 		};
 
@@ -449,10 +357,10 @@ export default class ImporterPlugin extends Plugin {
 		let modal = new ImporterModal(this.app, this);
 		modal.open();
 		// Select my importer
-		modal.updateContent('html');
-		if (modal.importer instanceof HtmlImporter) {
-			// Automatically pick file
-			modal.importer.files = [new NodePickedFile('path/to/test/file.html')];
+		modal.updateContent('url');
+		if (modal.importer instanceof UrlImporter) {
+			// Automatically set URL
+			modal.importer.sourceUrl = 'https://example.com';
 		}
 		*/
 	}
@@ -551,9 +459,6 @@ class ImporterSettingsTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
-
-		containerEl.createEl('h2', { text: 'URL import defaults' });
-		containerEl.createEl('p', { text: 'Default settings used by the URL importer modal and quick import (right-click on a link).' });
 
 		const quick = this.plugin.data.quickUrl;
 

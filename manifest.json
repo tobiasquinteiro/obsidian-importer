@@ -4,7 +4,7 @@
 	"version": "1.8.6",
 	"minAppVersion": "0.15.0",
 	"description": "Add-on plugin focused on URL import workflows for Obsidian.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
+	"author": "Tobias Quinteiro",
+	"authorUrl": "https://github.com/tobiasquinteiro",
 	"isDesktopOnly": false
 }
