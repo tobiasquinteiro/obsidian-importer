@@ -10,7 +10,7 @@
 		"lint": "eslint src --fix",
 		"test": "tsx --test tests/**/*.test.ts"
 	},
-	"keywords": [],
+	"keywords": ["url", "import", "crawler", "web-to-markdown", "web-clipper"],
 	"author": "",
 	"license": "MIT",
 	"devDependencies": {
